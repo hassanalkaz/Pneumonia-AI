@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pneumonia Detection System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }.container {
+            max-width: 800px;
+            margin: 0 auto;
+        }.header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }.logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }.logo i { font-size: 2.5rem; }.logo h1 { font-size: 2rem; font-weight: 700; }.subtitle { font-size: 1.1rem; opacity: 0.9; }.main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }.upload-section { margin-bottom: 30px; }.upload-area {
+            border: 3px dashed var(--gray-300);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--gray-50);
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }.upload-area:hover {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }.upload-area.dragover {
+            border-color: var(--primary);
+            background: #dbeafe;
+            transform: scale(1.02);
+        }.upload-content { color: var(--gray-500); }.upload-icon {
+            font-size: 4rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }.upload-content h3 {
+            font-size: 1.3rem;
+            color: var(--gray-700);
+            margin-bottom: 10px;
+        }.file-types {
+            font-size: 0.85rem;
+            color: var(--gray-500);
+        }.preview-content { position: relative; }.preview-content img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }.change-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }.change-btn:hover { background: rgba(0, 0, 0, 0.9); }.analyze-btn {
+            width: 100%;
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }.analyze-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.5);
+        }.analyze-btn:disabled {
+            background: var(--gray-300);
+            cursor: not-allowed;
+        }.results-section {
+            border-top: 1px solid var(--gray-200);
+            padding-top: 30px;
+            margin-top: 30px;
+        }.results-section h2 {
+            color: var(--gray-700);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }.loading {
+            text-align: center;
+            padding: 40px;
+        }.spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }.prediction-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 25px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+        }.prediction-card.normal {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border: 2px solid var(--success);
+        }.prediction-card.pneumonia {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border: 2px solid var(--danger);
+        }.prediction-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }.prediction-card.normal.prediction-icon {
+            background: var(--success);
+            color: white;
+        }.prediction-card.pneumonia.prediction-icon {
+            background: var(--danger);
+            color: white;
+        }.prediction-text { flex: 1; }.prediction-text.label,.confidence.label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--gray-500);
+            margin-bottom: 4px;
+        }.prediction-text.value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }.confidence.value {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--gray-700);
+        }.probability-section {
+            background: var(--gray-50);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }.probability-section h3 {
+            font-size: 1rem;
+            color: var(--gray-700);
+            margin-bottom: 15px;
+        }.prob-bar-container { margin-bottom: 15px; }.prob-bar-container:last-child { margin-bottom: 0; }.prob-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            color: var(--gray-700);
+        }.prob-bar {
+            height: 12px;
+            background: var(--gray-200);
+            border-radius: 6px;
+            overflow: hidden;
+        }.prob-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.8s ease;
+        }.prob-fill.normal { background: var(--success); }.prob-fill.pneumonia { background: var(--danger); }.disclaimer {
+            display: flex;
+            gap: 12px;
+            padding: 15px;
+            background: #fef3c7;
+            border: 1px solid var(--warning);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: #92400e;
+        }.disclaimer i { font-size: 1.2rem; color: var(--warning); }.error {
+            text-align: center;
+            padding: 40px;
+            color: var(--danger);
+        }.error i { font-size: 3rem; margin-bottom: 15px; }.retry-btn {
+            margin-top: 15px;
+            padding: 10px 25px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }.footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 600px) {.main-content { padding: 20px; }.prediction-card { flex-direction: column; text-align: center; }.logo h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-lungs"></i>
+                <h1>Pneumonia Detection</h1>
+            </div>
+            <p class="subtitle">AI-Powered Chest X-Ray Analysis</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section -->
+            <div class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="fileInput" accept="image/*" hidden>
+                    <div class="upload-content" id="uploadContent">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <h3>Upload Chest X-Ray</h3>
+                        <p>Drag and drop an image here, or click to browse</p>
+                        <span class="file-types">Supports: JPG, PNG, JPEG</span>
+                    </div>
+                    <div class="preview-content" id="previewContent" style="display: none;">
+                        <img id="previewImage" src="" alt="Preview">
+                        <button class="change-btn" id="changeBtn">
+                            <i class="fas fa-sync-alt"></i> Change Image
+                        </button>
+                    </div>
+                </div>
+                <button class="analyze-btn" id="analyzeBtn" disabled>
+                    <i class="fas fa-search-plus"></i> Analyze X-Ray
+                </button>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <h2><i class="fas fa-chart-bar"></i> Analysis Results</h2>
+                
+                <!-- Loading State -->
+                <div class="loading" id="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Analyzing X-Ray...</p>
+                </div>
+
+                <!-- Results Content -->
+                <div class="results-content" id="resultsContent" style="display: none;">
+                    <div class="prediction-card" id="predictionCard">
+                        <div class="prediction-icon" id="predictionIcon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="prediction-text">
+                            <span class="label">Prediction</span>
+                            <span class="value" id="predictionValue">-</span>
+                        </div>
+                        <div class="confidence">
+                            <span class="label">Confidence</span>
+                            <span class="value" id="confidenceValue">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Probability Bars -->
+                    <div class="probability-section">
+                        <h3>Probability Distribution</h3>
+                        <div class="prob-bar-container">
+                            <div class="prob-label">
+                                <span>Normal</span>
+                                <span id="normalProb">0%</span>
+                            </div>
+                            <div class="prob-bar">
+                                <div class="prob-fill normal" id="normalBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="prob-bar-container">
+                            <div class="prob-label">
+                                <span>Pneumonia</span>
+                                <span id="pneumoniaProb">0%</span>
+                            </div>
+                            <div class="prob-bar">
+                                <div class="prob-fill pneumonia" id="pneumoniaBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Disclaimer -->
+                    <div class="disclaimer">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>This tool is for educational purposes only and should not replace professional medical diagnosis. Always consult a healthcare provider.</p>
+                    </div>
+                </div>
+
+                <!-- Error State -->
+                <div class="error" id="errorState" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <p id="errorMessage">An error occurred</p>
+                    <button class="retry-btn" id="retryBtn">Try Again</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Built with PyTorch & FastAPI | ResNet-50 Model</p>
+        </footer>
+    </div>
+
+    <script>
+        // API Configuration - Change this if your backend is on a different port
+        const API_URL = 'http://localhost:8000';
+
+        // DOM Elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadContent = document.getElementById('uploadContent');
+        const previewContent = document.getElementById('previewContent');
+        const previewImage = document.getElementById('previewImage');
+        const changeBtn = document.getElementById('changeBtn');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const resultsSection = document.getElementById('resultsSection');
+        const loading = document.getElementById('loading');
+        const resultsContent = document.getElementById('resultsContent');
+        const errorState = document.getElementById('errorState');
+        const errorMessage = document.getElementById('errorMessage');
+        const retryBtn = document.getElementById('retryBtn');
+
+        // State
+        let selectedFile = null;
+
+        // Event Listeners
+        uploadArea.addEventListener('click', (e) => {
+            if (e.target !== changeBtn && !changeBtn.contains(e.target)) {
+                fileInput.click();
+            }
+        });
+        
+        fileInput.addEventListener('change', handleFileSelect);
+        
+        changeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetUpload();
+            fileInput.click();
+        });
+        
+        analyzeBtn.addEventListener('click', analyzeImage);
+        retryBtn.addEventListener('click', analyzeImage);
+
+        // Drag and Drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        // Functions
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+
+            selectedFile = file;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                uploadContent.style.display = 'none';
+                previewContent.style.display = 'block';
+                analyzeBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+
+            resultsSection.style.display = 'none';
+        }
+
+        function resetUpload() {
+            selectedFile = null;
+            fileInput.value = '';
+            previewImage.src = '';
+            uploadContent.style.display = 'block';
+            previewContent.style.display = 'none';
+            analyzeBtn.disabled = true;
+            resultsSection.style.display = 'none';
+        }
+
+        async function analyzeImage() {
+            if (!selectedFile) return;
+
+            resultsSection.style.display = 'block';
+            loading.style.display = 'block';
+            resultsContent.style.display = 'none';
+            errorState.style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                const response = await fetch(`${API_URL}/predict`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Prediction failed');
+                }
+
+                const data = await response.json();
+                displayResults(data);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message);
+            }
+        }
+
+        function displayResults(data) {
+            loading.style.display = 'none';
+            resultsContent.style.display = 'block';
+
+            const predictionCard = document.getElementById('predictionCard');
+            const predictionIcon = document.getElementById('predictionIcon');
+            const predictionValue = document.getElementById('predictionValue');
+            const confidenceValue = document.getElementById('confidenceValue');
+
+            const isNormal = data.prediction === 'NORMAL';
+            predictionCard.className = `prediction-card ${isNormal ? 'normal' : 'pneumonia'}`;
+            predictionIcon.innerHTML = isNormal 
+                ? '<i class="fas fa-check-circle"></i>' 
+                : '<i class="fas fa-exclamation-circle"></i>';
+            predictionValue.textContent = data.prediction;
+            confidenceValue.textContent = `${data.confidence}%`;
+
+            document.getElementById('normalProb').textContent = `${data.probabilities.NORMAL}%`;
+            document.getElementById('pneumoniaProb').textContent = `${data.probabilities.PNEUMONIA}%`;
+            
+            // Reset bars first
+            document.getElementById('normalBar').style.width = '0%';
+            document.getElementById('pneumoniaBar').style.width = '0%';
+            
+            // Animate the bars
+            setTimeout(() => {
+                document.getElementById('normalBar').style.width = `${data.probabilities.NORMAL}%`;
+                document.getElementById('pneumoniaBar').style.width = `${data.probabilities.PNEUMONIA}%`;
+            }, 100);
+        }
+
+        function showError(message) {
+            loading.style.display = 'none';
+            resultsContent.style.display = 'none';
+            errorState.style.display = 'block';
+            errorMessage.textContent = message || 'An error occurred. Please try again.';
+        }
+
+        // Check API health on load
+        async function checkAPIHealth() {
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                console.log('API Status:', data);
+            } catch (error) {
+                console.warn('Backend API not available. Make sure the server is running on ' + API_URL);
+            }
+        }
+
+        checkAPIHealth();
+    </script>
+</body>
+</html>
